@@ -16,10 +16,33 @@ DB_PASS = os.environ.get("DB_PASS", "admin123")
 DB_NAME = os.environ.get("DB_NAME", "desahub_db")
 
 def get_db_connection():
-    return pymysql.connect(
-        host=DB_HOST, user=DB_USER, password=DB_PASS, database=DB_NAME,
-        cursorclass=pymysql.cursors.DictCursor
+    # 1. Koneksi awal tanpa menentukan database agar tidak error
+    conn = pymysql.connect(
+        host=os.environ.get('DB_HOST'),
+        user=os.environ.get('DB_USER'),
+        password=os.environ.get('DB_PASSWORD')
     )
+    
+    cursor = conn.cursor()
+    
+    # 2. Perintah 'Sakti' untuk membuat database jika belum ada
+    cursor.execute("CREATE DATABASE IF NOT EXISTS desahub_db")
+    cursor.execute("USE desahub_db")
+    
+    # 3. Membuat tabel pengajuan jika belum ada
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS pengajuan (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            nik VARCHAR(20),
+            nama VARCHAR(100),
+            jenis_surat VARCHAR(50),
+            keperluan TEXT,
+            file_ktp VARCHAR(255),
+            tanggal TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.commit()
+    return conn
 
 # ==========================================
 # KONFIGURASI AWS S3 & CLOUDFRONT
