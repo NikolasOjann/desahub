@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+
+# AWS file rahasia (jika ada)
+.aws/credentials
+
+# OS generated files
+.DS_Store
+Thumbs.db
