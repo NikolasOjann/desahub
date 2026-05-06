@@ -1,6 +1,5 @@
-fastapi==0.104.1
-uvicorn==0.24.0.post1
-boto3==1.29.3        # AWS SDK untuk Python (wajib untuk S3)
-python-multipart==0.0.6 # Wajib untuk fitur upload file di FastAPI
-sqlalchemy==2.0.23   # Untuk koneksi ke database RDS
-pymysql==1.1.0       # Driver database (asumsi Anda pakai MySQL di RDS)
+Flask==2.3.2
+boto3==1.28.3
+pymysql==1.1.0
+Werkzeug==2.3.6
+cryptography==41.0.3

@@ -1,63 +1,35 @@
-name: Deploy DesaHub to Amazon ECS
+name: Deploy DesaHub to AWS ECR
 
 on:
   push:
     branches:
-      - main # Pipeline berjalan otomatis setiap ada push ke branch main
-
-env:
-  AWS_REGION: ap-southeast-1                   # Sesuaikan dengan region AWS Anda (misal: ap-southeast-1 untuk Singapore)
-  ECR_REPOSITORY: desahub-repo                 # Nama repository ECR Anda
-  ECS_SERVICE: desahub-service                 # Nama service ECS Anda
-  ECS_CLUSTER: desahub-cluster                 # Nama cluster ECS Anda
-  ECS_TASK_DEFINITION: .aws/task-def.json      # Path ke file definisi task ECS (akan kita bahas selanjutnya)
-  CONTAINER_NAME: desahub-container            # Nama container di dalam Task Definition
+      - main
 
 jobs:
-  deploy:
-    name: Build, Push, and Deploy
+  build-and-push:
+    name: Build Docker Image & Push to ECR
     runs-on: ubuntu-latest
-    environment: production
 
     steps:
-    - name: Checkout Source Code
+    - name: Checkout Code
       uses: actions/checkout@v3
 
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v2
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
+        aws-region: us-east-1
 
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
 
     - name: Build, tag, and push image to Amazon ECR
-      id: build-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        IMAGE_TAG: ${{ github.sha }}
+        ECR_REPOSITORY: desahub-repo
+        IMAGE_TAG: latest
       run: |
-        # Build Docker image sesuai dengan Dockerfile yang dibuat di Tahap 2
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-        # Push image ke Amazon ECR
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-
-    - name: Fill in the new image ID in the Amazon ECS task definition
-      id: task-def
-      uses: aws-actions/amazon-ecs-render-task-definition@v1
-      with:
-        task-definition: ${{ env.ECS_TASK_DEFINITION }}
-        container-name: ${{ env.CONTAINER_NAME }}
-        image: ${{ steps.build-image.outputs.image }}
-
-    - name: Deploy Amazon ECS task definition
-      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-      with:
-        task-definition: ${{ steps.task-def.outputs.task-definition }}
-        service: ${{ env.ECS_SERVICE }}
-        cluster: ${{ env.ECS_CLUSTER }}
-        wait-for-service-stability: true

@@ -1,20 +1,25 @@
-# Gunakan base image Python versi ringan
+# Gunakan image Python yang ringan
 FROM python:3.9-slim
 
-# Set working directory di dalam container
+# Tentukan direktori kerja di dalam kontainer
 WORKDIR /app
 
-# Copy file requirements terlebih dahulu untuk caching layer Docker
-COPY requirements.txt .
+# Install pustaka sistem yang diperlukan untuk koneksi MySQL
+RUN apt-get update && apt-get install -y \
+    gcc \
+    default-libmysqlclient-dev \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies
+# Copy requirements dan install library
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy seluruh source code aplikasi ke dalam container
+# Copy seluruh kode aplikasi
 COPY . .
 
-# Expose port yang akan digunakan oleh FastAPI (8000)
-EXPOSE 8000
+# Ekspos port Flask
+EXPOSE 5000
 
-# Perintah untuk menjalankan aplikasi menggunakan Uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Perintah menjalankan aplikasi saat kontainer ECS menyala
+CMD ["python", "app.py"]
