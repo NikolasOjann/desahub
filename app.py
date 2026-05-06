@@ -16,20 +16,20 @@ DB_PASS = os.environ.get("DB_PASSWORD") # Pastikan nama variabel sesuai di ECS
 DB_NAME = "desahub_db"
 
 def get_db_connection():
-    # Koneksi awal ke server MySQL
+    # Koneksi awal ke server MySQL (Tanpa database spesifik)
     conn = pymysql.connect(
-        host=DB_HOST,
-        user=DB_USER,
-        password=DB_PASS,
-        # SANGAT PENTING: Agar bisa memanggil row['nama']
-        cursorclass=pymysql.cursors.DictCursor 
+        host=os.environ.get('DB_HOST'),
+        user=os.environ.get('DB_USER'),
+        password=os.environ.get('DB_PASSWORD'),
+        cursorclass=pymysql.cursors.DictCursor
     )
     
     cursor = conn.cursor()
-    cursor.execute(f"CREATE DATABASE IF NOT EXISTS {DB_NAME}")
-    cursor.execute(f"USE {DB_NAME}")
+    # Pastikan database ada, baru kemudian digunakan
+    cursor.execute("CREATE DATABASE IF NOT EXISTS desahub_db")
+    cursor.execute("USE desahub_db")
     
-    # Sinkronisasi nama kolom: Gunakan 'dokumen_url' dan tambahkan 'status'
+    # Pastikan tabel juga tersedia
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS pengajuan (
             id INT AUTO_INCREMENT PRIMARY KEY,
