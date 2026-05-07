@@ -78,7 +78,7 @@ def upload_to_s3(file_obj):
 # ==========================================
 @app.route('/')
 def index():
-    return "<h1>Selamat Datang di DesaHub</h1><p>Silakan ke <a href='/ajukan'>/ajukan</a> untuk membuat surat.</p>"
+    return render_template('index.html')
 
 @app.route('/ajukan', methods=['GET', 'POST'])
 def ajukan():
