@@ -83,56 +83,34 @@ def index():
 @app.route('/ajukan', methods=['GET', 'POST'])
 def ajukan():
     if request.method == 'POST':
-        nik = request.form['nik']
-        nama = request.form['nama']
-        jenis = request.form['jenis_surat']
-        keperluan = request.form['keperluan']
-        file_ktp = request.files['file_ktp']
-        
-        dokumen_url = upload_to_s3(file_ktp)
-        
+        # ... (Biarkan kode proses POST / S3 / RDS tetap sama seperti sebelumnya) ...
+        # Contoh respons sukses jika berhasil:
         if dokumen_url:
-            conn = get_db_connection()
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    "INSERT INTO pengajuan (nik, nama, jenis_surat, keperluan, dokumen_url) VALUES (%s, %s, %s, %s, %s)",
-                    (nik, nama, jenis, keperluan, dokumen_url)
-                )
-            conn.commit()
-            conn.close()
-            return f"<h2>Pengajuan Berhasil!</h2><p>Dokumen Anda: <a href='{dokumen_url}'>Lihat di CloudFront</a></p><br><a href='/tracking'>Cek Status</a>"
+            # ... proses insert DB ...
+            return f"""
+            <div style="text-align:center; margin-top:50px; font-family:sans-serif;">
+                <h2 style="color:green;">Pengajuan Berhasil! 🎉</h2>
+                <p>Dokumen Anda: <a href='{dokumen_url}'>Lihat di CloudFront</a></p>
+                <br><a href='/tracking' style="padding:10px 20px; background:blue; color:white; text-decoration:none; border-radius:5px;">Cek Status Layanan</a>
+            </div>
+            """
         else:
             return "Gagal upload dokumen ke S3."
 
-    return """
-    <h2>Pengajuan Surat Administrasi DesaHub</h2>
-    <form method="POST" enctype="multipart/form-data">
-        NIK: <input type="text" name="nik" required><br><br>
-        Nama: <input type="text" name="nama" required><br><br>
-        Jenis Surat: <select name="jenis_surat">
-            <option value="Surat Domisili">Surat Domisili</option>
-            <option value="Surat Keterangan Usaha">Surat Keterangan Usaha</option>
-        </select><br><br>
-        Keperluan: <textarea name="keperluan"></textarea><br><br>
-        Upload KTP (Gambar/PDF): <input type="file" name="file_ktp" required><br><br>
-        <button type="submit">Ajukan Surat</button>
-    </form>
-    <br><a href='/tracking'>Cek Status Pengajuan</a>
-    """
+    # MENGGUNAKAN RENDER TEMPLATE SEKARANG!
+    return render_template('ajukan.html')
 
 @app.route('/tracking')
 def tracking():
     conn = get_db_connection()
     with conn.cursor() as cursor:
+        # Mengambil data terbaru di atas
         cursor.execute("SELECT * FROM pengajuan ORDER BY id DESC")
         data = cursor.fetchall()
     conn.close()
     
-    html = "<h2>Tracking Status Layanan</h2><table border='1'><tr><th>ID</th><th>Nama</th><th>Surat</th><th>Status</th><th>File (CDN)</th></tr>"
-    for row in data:
-        html += f"<tr><td>{row['id']}</td><td>{row['nama']}</td><td>{row['jenis_surat']}</td><td><b>{row['status']}</b></td><td><a href='{row['dokumen_url']}' target='_blank'>Buka File</a></td></tr>"
-    html += "</table><br><a href='/ajukan'>Kembali</a>"
-    return html
+    # Render template dan kirim variabel 'data' ke HTML
+    return render_template('tracking.html', data=data)
 
 if __name__ == '__main__':
     # Inisialisasi DB sekali saat start
